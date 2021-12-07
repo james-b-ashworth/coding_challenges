@@ -41,3 +41,89 @@ nb_model <- discrim::naive_Bayes() %>%
 #Save graph
 ggsave("C:/code/coding_challenges/documents/variable_importance_scores.png")
 
+# evaluate performance of all three models
+
+preds_bt <- bind_cols(
+    predict(bt_model, new_data = dat_test),
+    predict(bt_model, dat_test, type = "prob"),
+    truth = pull(dat_test, has_basement)
+  )
+
+preds_logistic <- bind_cols(
+    predict(logistic_model, new_data = dat_test),
+    predict(logistic_model, dat_test, type = "prob"),
+    truth = pull(dat_test, has_basement)
+  )
+
+preds_nb <- bind_cols(
+    predict(nb_model, new_data = dat_test),
+    predict(nb_model, dat_test, type = "prob"),
+    truth = pull(dat_test, has_basement)
+  )
+
+# Confusion Matrixes
+preds_bt %>% conf_mat(truth, .pred_class)
+preds_logistic %>% conf_mat(truth, .pred_class)
+preds_nb %>% conf_mat(truth, .pred_class)
+
+# Accuracy rates
+preds_bt %>% metrics(truth, .pred_class)
+preds_logistic %>% metrics(truth, .pred_class)
+preds_nb %>% metrics(truth, .pred_class)
+
+# Other requested metrics setting up what want to recall below
+metrics_calc <- metric_set(accuracy, bal_accuracy, precision, f_meas, recall)
+
+# Look at metrics
+preds_bt %>%
+    metrics_calc(truth, estimate = .pred_class)
+
+preds_logistic %>%
+    metrics_calc(truth, estimate = .pred_class)
+
+preds_nb %>%
+    metrics_calc(truth, estimate = .pred_class)
+
+#  & roc curves of three models
+
+preds_bt %>%
+    roc_curve(truth, estimate = .pred_has_basement) %>%
+    autoplot()
+
+#Save graph
+ggsave("C:/code/coding_challenges/documents/auc_bt.png")
+
+preds_logistic %>%
+    roc_curve(truth, estimate = .pred_has_basement) %>%
+    autoplot()
+
+#Save graph
+ggsave("C:/code/coding_challenges/documents/auc_logistic.png")
+
+preds_nb %>%
+    roc_curve(truth, estimate = .pred_has_basement) %>%
+    autoplot()
+
+#Save graph
+ggsave("C:/code/coding_challenges/documents/auc_bayes.png")
+
+# Combine all rows to combine in a single graph
+preds_all <- bind_rows(
+    mutate(preds_bt, model = "Boosted Tree"),
+    mutate(preds_logistic, model = "Logistic Regression"),
+    mutate(preds_nb, model = "Naive Bayes")
+)
+
+# Plot & table of all three models
+preds_all %>%
+    group_by(model) %>%
+    roc_curve(truth, estimate = .pred_has_basement) %>%
+    autoplot()
+
+#Save graph
+ggsave("C:/code/coding_challenges/documents/auc_all_models.png")
+
+preds_all %>%
+    group_by(model) %>%
+    metrics_calc(truth, estimate = .pred_class) %>%
+    pivot_wider(names_from = .metric, values_from = .estimate)
