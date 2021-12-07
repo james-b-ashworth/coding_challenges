@@ -107,6 +107,3 @@ plot(onehouse)
 
 #Save graph
 ggsave("C:/code/coding_challenges/documents/predict_waterfall.png")
-
-
-dat_train %>% dplyr::slice(new_house)
