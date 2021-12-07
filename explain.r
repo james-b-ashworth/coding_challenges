@@ -64,3 +64,49 @@ plot(bt_parts, logistic_parts,  max_vars = 6)
 #Save graph
 ggsave("C:/code/coding_challenges/documents/eval_feat_importance_diff.png")
 
+# Picked one house to explain
+colnames(dat_exp)
+
+new_house <- data.frame(
+    livearea = 2693,
+    yrbuilt = 2012,
+    condition = 0,
+    quality = 2,
+    totunits = 1,
+    stories = 2,
+    nocars = 3,
+    numbdrm = 4,
+    numbaths = 4,
+    sprice = 451450,
+    deduct = 0,
+    netprice = 451450,
+    tasp = 451450,
+    smonth = 10,
+    syear = 2010,
+    qualified = 0,
+    status = 1,
+    attachedGarage = 1,
+    arcstyle_BI.LEVEL = 0,
+    arcstyle_CONVERSIONS = 0,
+    arcstyle_END.UNIT = 0,
+    arcstyle_MIDDLE.UNIT = 0,
+    arcstyle_ONE.STORY = 0,
+    arcstyle_ONE.AND.HALF.STORY = 1,
+    arcstyle_SPLIT.LEVEL = 0,
+    arcstyle_THREE.STORY = 0,
+    arcstyle_TRI.LEVEL = 0,
+    arcstyle_TRI.LEVEL.WITH.BASEMENT = 0,
+    arcstyle_TWO.STORY = 0,
+    arcstyle_TWO.AND.HALF.STORY = 0
+)
+
+onehouse <- predict_parts(explainer_bt,
+    new_observation = new_house, type = "break_down") #change type to shap for diffferent graph
+    
+plot(onehouse)
+
+#Save graph
+ggsave("C:/code/coding_challenges/documents/predict_waterfall.png")
+
+
+dat_train %>% dplyr::slice(new_house)
