@@ -6,22 +6,24 @@ library(skimr)
 
 # Import Data w/ only desired columns + flip all to lowercase to conserve typing
 
-dat <- read.csv('C:/code/coding_challenges/data/SalesBook_2013.csv') %>%
-    select(BASEMENT, PARCEL, LIVEAREA, YRBUILT, CONDITION, QUALITY, TOTUNITS, STORIES, GARTYPE, NOCARS, NUMBDRM, NUMBATHS, ARCSTYLE, SPRICE, DEDUCT, NETPRICE, TASP, SMONTH, SYEAR, QUALIFIED, STATUS) %>%
+dat <- read.csv("C:/code/coding_challenges/data/SalesBook_2013.csv") %>%
+    select(BASEMENT, PARCEL, LIVEAREA, YRBUILT, CONDITION, QUALITY,
+    TOTUNITS, STORIES, GARTYPE, NOCARS, NUMBDRM, NUMBATHS, ARCSTYLE,
+    SPRICE, DEDUCT, NETPRICE, TASP, SMONTH, SYEAR, QUALIFIED, STATUS) %>%
     rename_all(str_to_lower) %>%
     filter(
         totunits <= 2,
         yrbuilt != 0,
         condition != "None",
         livearea < 5500) %>%
-    # Change str -> int/float, fill in nulls    
+    # Change str -> int/float, fill in nulls
     mutate(
         basement = ifelse(is.na(basement), 0, basement),
-        has_basement = ifelse(basement > 0, "has_basement", "no_basement")  %>% factor(levels = c("has_basement","no_basement")),
+        has_basement = ifelse(basement > 0, "has_basement", "no_basement") %>% factor(levels = c("has_basement", "no_basement")),
         # quality case_when (keeping same as class)
     quality = case_when(
         quality == "E-" ~ -0.3, quality == "E" ~ 0,
-        quality == "E+" ~ 0.3, quality == "D-" ~ 0.7, 
+        quality == "E+" ~ 0.3, quality == "D-" ~ 0.7,
         quality == "D" ~ 1, quality == "D+" ~ 1.3,
         quality == "C-" ~ 1.7, quality == "C" ~ 2,
         quality == "C+" ~ 2.3, quality == "B-" ~ 2.7,
@@ -39,7 +41,6 @@ dat <- read.csv('C:/code/coding_challenges/data/SalesBook_2013.csv') %>%
         condition == "Avg" ~ 0,
         condition == "Fair" ~ -1,
         condition == "Poor" ~ -2),
-    
     # qualified q to 1 u to 0
     qualified = case_when(
         qualified == "Q" ~ 1,
@@ -56,8 +57,8 @@ dat <- read.csv('C:/code/coding_challenges/data/SalesBook_2013.csv') %>%
     attachedGarage = gartype %>% str_to_lower() %>% str_detect("cp") %>% as.numeric(),
     attachedGarage = gartype %>% str_to_lower() %>% str_detect("none") %>% as.numeric()
     ) %>%
-    # Get first one in group when multiple sales
-    arrange(parcel,smonth) %>%
+    #Select just last record
+    arrange(parcel, smonth) %>%
     group_by(parcel) %>%
     slice(1) %>%
     ungroup() %>%
@@ -72,7 +73,7 @@ dat <- read.csv('C:/code/coding_challenges/data/SalesBook_2013.csv') %>%
 
 # Set dummy variables for the arcstyle
 dat_ml <- dat %>%
-    recipe(has_basement ~ ., data = dat) %>% 
+    recipe(has_basement ~ ., data = dat) %>%
     step_dummy(arcstyle) %>% #different steps other than dummy
     prep() %>%
     juice()
@@ -85,6 +86,32 @@ vis_dat(dat_ml)
 
 #Save graph
 ggsave("C:/code/coding_challenges/documents/vis_dat_graph_no_na.png")
+
+#Explore Graph
+(dat %>%
+    filter(
+        has_basement == "has_basement") %>%
+    ggplot(aes(x = livearea)) +
+    geom_bar() +
+    labs(x = "Living Area", y = "Qty") +
+    theme_bw())
+
+#Save graph
+ggsave("C:/code/coding_challenges/documents/living_area.png")
+
+#Explore Graph
+(dat %>%
+    filter(
+        has_basement == "has_basement") %>%
+    ggplot(aes(x = arcstyle)) +
+    geom_bar() +
+    labs(x = "ArcStyle", y = "Qty") +
+    coord_flip() +
+    theme_bw())
+
+#Save graph
+ggsave("C:/code/coding_challenges/documents/arcstyle.png")
+
 
 # write file
 write_rds(dat_ml, "C:/code/coding_challenges/data/dat_ml.rds")
